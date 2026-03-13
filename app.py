@@ -4,31 +4,47 @@ from pydantic import BaseModel
 app = FastAPI(title="System Loop Analyzer")
 
 
-class AnalyzeRequest(BaseModel):
+class AnalysisRequest(BaseModel):
     text: str
 
 
 @app.post("/analyze")
-def analyze_loop(request: AnalyzeRequest) -> dict:
-    words = [word.strip(".,!?;:").lower() for word in request.text.split() if word.strip()]
-    unique_words = sorted(set(words))
+def analyze_system_loop(request: AnalysisRequest) -> dict:
+    text = request.text.lower()
+    detected_loops: list[str] = []
+    leverage_points: list[str] = []
 
-    key_variables = unique_words[:5] if unique_words else ["input"]
+    if "delay" in text or "slow" in text:
+        detected_loops.append(
+            "Reinforcing loop: delays create slower responses, which increase delays"
+        )
+        leverage_points.append(
+            "Reduce delays in information flow and decision-making"
+        )
 
-    if "delay" in words or "slow" in words:
-        leverage_point = "Reduce delays in feedback and response timing"
-    elif "cost" in words or "price" in words:
-        leverage_point = "Adjust incentives around pricing and cost signals"
-    else:
-        leverage_point = "Improve feedback quality between cause and effect"
+    if "cost" in text or "price" in text:
+        detected_loops.append(
+            "Balancing loop: higher costs trigger controls that push costs down"
+        )
+        leverage_points.append(
+            "Improve cost feedback and pricing review cadence"
+        )
 
-    system_loop = (
-        "Inputs influence behavior, behavior changes outcomes, and outcomes "
-        "feed back to influence future inputs."
+    if not detected_loops:
+        detected_loops.append(
+            "General feedback loop: outcomes influence future actions"
+        )
+        leverage_points.append(
+            "Clarify key feedback signals and response rules"
+        )
+
+    summary = (
+        f"Input highlights {len(detected_loops)} loop pattern(s). "
+        "The system behavior can be improved by acting on the listed leverage points."
     )
 
     return {
-        "system_loop": system_loop,
-        "key_variables": key_variables,
-        "leverage_point": leverage_point,
+        "detected_loops": detected_loops,
+        "leverage_points": leverage_points,
+        "summary": summary,
     }
